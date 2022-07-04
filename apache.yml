@@ -1,0 +1,44 @@
+##############################################################################
+#
+# Setup Apache web server.
+#
+#
+- name: Apache role 
+  hosts: webservers 
+  become: true
+  vars: 
+    apache_listen_ip: "*"
+    apache_listen_port: 8080 
+    apache_create_vhosts: true
+    apache_vhosts_filename: "vhosts.conf"
+    apache_vhosts_template: "vhosts.conf.j2"
+    apache_vhosts:
+      - servername: "webserver.dev"
+        documentroot: "/mnt/data/html/"
+    apache_global_vhost_settings: |
+        DirectoryIndex index.html
+    apache_allow_override: "All"
+    apache_options: "-Indexes +FollowSymLinks"
+    apache_state: started
+    vhost_page: "/mnt/data/htdocs"
+    80_index: "/var/www/html/index.html"
+  tasks: 
+  - include_role:
+      name: geerlingguy.apache
+
+  - name: create "{{ vhost_page }}" folder 
+    file:
+      path: "{{ vhost_page }}"
+      state: directory
+      mode: 0764  
+      
+  - name: create index file port 8080 
+    copy:
+      content: "Hello wolrd"
+      dest: "{{ vhost_page }}/index.html"
+
+  - name: create index file port 80
+    copy:
+      content: "{{ ansible_default_ipv4.address }}  has been customized with ansible"
+      dest: "{{ 80_index }}"
+...
